@@ -1,0 +1,35 @@
+﻿@page "/Manage/Roles"
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter
+@using InventoryManagerApp.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject RoleManager<IdentityRole> RoleManager
+
+<PageTitle>Manage Roles</PageTitle>
+
+<h1>Manage Roles</h1>
+
+<p>
+    <a class="btn btn-outline-primary" href="Manage/Roles/create">+ Add Role</a>
+</p>
+
+<QuickGrid Class="table" Items="RoleList" TGridItem="IdentityRole">
+    <PropertyColumn Title="Role Name" Property="role => role.Name" />
+
+    <TemplateColumn Context="role">
+        <a class="btn btn-info" href="@($"Manage/Roles/details?id={role.Id}")">Details</a> |
+        <a class="btn btn-danger" href="@($"Manage/Roles/delete?id={role.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private IQueryable<IdentityRole> RoleList { get; set; } = Enumerable.Empty<IdentityRole>().AsQueryable();
+
+    protected override void OnInitialized()
+    {
+        RoleList = RoleManager.Roles;
+    }
+}

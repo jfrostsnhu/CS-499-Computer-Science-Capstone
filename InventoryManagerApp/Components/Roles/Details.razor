@@ -1,0 +1,58 @@
+﻿@page "/Manage/Roles/details"
+
+@using Microsoft.EntityFrameworkCore
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Account
+
+@inject RoleManager<IdentityRole> RoleManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Role Details</PageTitle>
+
+<h1>View Role Details</h1>
+
+<div>
+    <hr />
+    @if (Role is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Role Name</dt>
+            <dd class="col-sm-10">@Role.Name</dd>
+        </dl>
+        <div>
+            <a class="btn btn-secondary" href="@($"/Manage/Roles")">Back</a>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? Id { get; set; }
+
+    private IdentityRole? Role { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(Id))
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        Role = await RoleManager.FindByIdAsync(Id);
+
+        if (Role == null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+    }
+}

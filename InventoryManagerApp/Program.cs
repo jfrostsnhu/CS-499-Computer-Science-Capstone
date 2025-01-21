@@ -13,6 +13,8 @@ namespace InventoryManagerApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddQuickGridEntityFrameworkAdapter();
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();

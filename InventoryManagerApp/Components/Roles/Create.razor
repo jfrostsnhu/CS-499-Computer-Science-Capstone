@@ -1,0 +1,80 @@
+﻿@page "/Manage/Roles/create"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Account
+@using InventoryManagerApp.Components.Account.Shared
+
+@inject NavigationManager NavigationManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<Create> Logger
+
+<PageTitle>Add Role</PageTitle>
+
+<h1>Add Role</h1>
+
+<h3>Enter role details below.</h3>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <StatusMessage Message="@Message"></StatusMessage>
+        <EditForm method="post" Model="Input" OnValidSubmit="AddRole" FormName="addRole">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <InputText @bind-Value="Input.RoleName" class="form-control" autocomplete="rolename" aria-required="true" placeholder="Role Name"/>
+                <label for="rolename">Role Name</label> 
+                <ValidationMessage For="() => Input.RoleName" class="text-danger"/>
+            </div>        
+            <a class="btn btn-secondary" href="/Manage/Roles">Back</a>
+            <button type="submit" class="btn btn-success">Save</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    private async Task AddRole(EditContext editContext)
+    {
+        var exists = await RoleManager.RoleExistsAsync(Input.RoleName);
+        if (exists)
+        {
+            Logger.LogInformation("This role already exists");
+            return;
+        }
+
+        var result = await RoleManager.CreateAsync(new IdentityRole(Input.RoleName));
+
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("Role successfully created");
+            NavigationManager.NavigateTo("/Manage/Roles/");
+        }
+        else
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(20, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
+        public string? RoleName { get; set; }
+    }
+}
