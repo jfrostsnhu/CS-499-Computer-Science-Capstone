@@ -1,0 +1,44 @@
+﻿@page "/Manage/Inventory/"
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using InventoryManagerApp.Data
+
+@implements IAsyncDisposable
+@inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Manage Inventory</PageTitle>
+
+<h1>Manage Inventory</h1>
+
+<p>
+    <a class="btn btn-outline-primary" href="Manage/Inventory/create">+ Add Item</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Item">
+    <PropertyColumn Property="item => item.SKU" />
+    <PropertyColumn Property="item => item.UPC" />
+    <PropertyColumn Property="item => item.Description" />
+    <PropertyColumn Property="item => item.Vendor" />
+    <PropertyColumn Property="item => item.Cost" />
+    <PropertyColumn Property="item => item.Price" />
+    <PropertyColumn Property="item => item.Quantity" />
+    <PropertyColumn Property="item => item.LastUpdated" />
+
+    <TemplateColumn Context="item">
+        <a class="btn btn-info" href="@($"Manage/Inventory/details?id={item.Id}")">Details</a> |
+        <a class="btn btn-warning" href="@($"Manage/Inventory/edit?id={item.Id}")">Edit</a> |
+        <a class="btn btn-danger" href="@($"Manage/Inventory/delete?id={item.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

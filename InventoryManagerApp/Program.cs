@@ -12,6 +12,9 @@ namespace InventoryManagerApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContext' not found.")));
+
 
             builder.Services.AddQuickGridEntityFrameworkAdapter();
 

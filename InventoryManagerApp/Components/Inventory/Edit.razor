@@ -1,0 +1,120 @@
+﻿@page "/Manage/Inventory/edit"
+
+@using Microsoft.EntityFrameworkCore
+@using InventoryManagerApp.Data
+
+@inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Item</PageTitle>
+
+<h1>Edit Item</h1>
+
+<hr />
+@if (Item is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Item" OnValidSubmit="UpdateItem" FormName="editItem" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Item.Id" value="@Item.Id" />
+                <div class="mb-3">
+                    <label for="sku" class="form-label">SKU:</label>
+                    <InputText id="sku" @bind-Value="Item.SKU" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Item.SKU" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="upc" class="form-label">UPC:</label>
+                    <InputText id="upc" @bind-Value="Item.UPC" class="form-control" />
+                    <ValidationMessage For="() => Item.UPC" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Item.Description" class="form-control" />
+                    <ValidationMessage For="() => Item.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="vendor" class="form-label">Vendor:</label>
+                    <InputText id="vendor" @bind-Value="Item.Vendor" class="form-control" />
+                    <ValidationMessage For="() => Item.Vendor" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="cost" class="form-label">Cost:</label>
+                    <InputNumber id="cost" @bind-Value="Item.Cost" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Item.Cost" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="price" @bind-Value="Item.Price" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Item.Price" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity:</label>
+                    <InputNumber id="quantity" @bind-Value="Item.Quantity" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Item.Quantity" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="lastupdated" class="form-label">Last Updated:</label>
+                    <InputDate id="lastupdated" @bind-Value="Item.LastUpdated" class="form-control" />
+                    <ValidationMessage For="() => Item.LastUpdated" class="text-danger" />
+                </div>
+                <a class="btn btn-secondary" href="/Manage/Inventory/">Back</a>
+                <button type="submit" class="btn btn-success">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Item? Item { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Item ??= await context.Item.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Item is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateItem()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Item!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ItemExists(Item!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/Manage/Inventory");
+    }
+
+    private bool ItemExists(Guid id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Item.Any(e => e.Id == id);
+    }
+}

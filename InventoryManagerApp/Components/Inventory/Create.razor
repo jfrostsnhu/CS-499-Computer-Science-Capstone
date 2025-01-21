@@ -1,0 +1,77 @@
+﻿@page "/Manage/Inventory/create"
+
+@using Microsoft.EntityFrameworkCore
+@using InventoryManagerApp.Data
+
+@inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Add Item</PageTitle>
+
+<h1>Add Item</h1>
+
+<h3>Enter item details below.</h3>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Item" OnValidSubmit="AddItem" FormName="addItem">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="sku" class="form-label">SKU:</label> 
+                <InputText id="sku" @bind-Value="Item.SKU" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Item.SKU" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="upc" class="form-label">UPC:</label> 
+                <InputText id="upc" @bind-Value="Item.UPC" class="form-control" /> 
+                <ValidationMessage For="() => Item.UPC" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Item.Description" class="form-control" /> 
+                <ValidationMessage For="() => Item.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="vendor" class="form-label">Vendor:</label> 
+                <InputText id="vendor" @bind-Value="Item.Vendor" class="form-control" /> 
+                <ValidationMessage For="() => Item.Vendor" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="cost" class="form-label">Cost:</label> 
+                <InputNumber id="cost" @bind-Value="Item.Cost" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Item.Cost" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="price" class="form-label">Price:</label> 
+                <InputNumber id="price" @bind-Value="Item.Price" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Item.Price" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Quantity:</label> 
+                <InputNumber id="quantity" @bind-Value="Item.Quantity" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Item.Quantity" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="lastupdated" class="form-label">Last Updated:</label> 
+                <InputDate id="lastupdated" @bind-Value="Item.LastUpdated" class="form-control" /> 
+                <ValidationMessage For="() => Item.LastUpdated" class="text-danger" /> 
+            </div>
+            <a class="btn btn-secondary" href="/Manage/Inventory">Back</a>
+            <button type="submit" class="btn btn-success">Save</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Item Item { get; set; } = new();
+
+    private async Task AddItem()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Item.Add(Item);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/Manage/Inventory/");
+    }
+}

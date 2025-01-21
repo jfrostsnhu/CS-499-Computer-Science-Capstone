@@ -20,5 +20,7 @@ namespace InventoryManagerApp.Data
             builder.Entity<IdentityRoleClaim<string>>(entity => entity.ToTable(name: "RoleClaims"));
             builder.Entity<IdentityUserToken<string>>(entity => entity.ToTable(name: "UserTokens"));
         }
+
+        public DbSet<Item> Item { get; set; } = default!;
     }
 }
