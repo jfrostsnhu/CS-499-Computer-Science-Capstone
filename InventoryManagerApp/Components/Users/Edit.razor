@@ -1,0 +1,170 @@
+﻿@page "/Manage/Users/edit"
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Account
+@using InventoryManagerApp.Components.Account.Shared
+@using System.ComponentModel.DataAnnotations
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject NavigationManager NavigationManager
+@inject ILogger<Edit> Logger
+
+<PageTitle>Edit User</PageTitle>
+
+<h1>Edit User</h1>
+
+<hr />
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Input" OnValidSubmit="UpdateUser" FormName="editUser" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                 <input type="hidden" name="User.Id" value="@User.Id" />
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <InputText @bind-Value="Input.Email" class="form-control" />
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="firstname" class="form-label">First Name:</label>
+                    <InputText @bind-Value="Input.FirstName" class="form-control" />
+                    <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="lastname" class="form-label">Last Name:</label>
+                    <InputText @bind-Value="Input.LastName" class="form-control" />
+                    <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="phonenumber" class="form-label">Phone Number:</label>
+                    <InputText @bind-Value="Input.PhoneNumber" class="form-control" />
+                    <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="userrole" class="form-label">Role:</label>
+                    <InputSelect @bind-Value="Input.Role" class="form-control" >
+                        @foreach (var role in identityRoles)
+                        {
+                            <option value="@role.Name">@role.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Input.Role" class="text-danger" />
+                </div>
+                <br />
+                <a class="w-25 btn btn-secondary" href="/Manage/Users/">Back</a>
+                <button type="submit" class="w-25 btn btn-success">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string? Email = string.Empty;
+    private string? FirstName = string.Empty;
+    private string? LastName = string.Empty;
+    private string? PhoneNumber = string.Empty;
+    private string? currentRole = string.Empty;
+    private string? newRole = string.Empty;
+    private List<IdentityRole>? identityRoles;
+    private ApplicationUser? User;
+    private IEnumerable<IdentityError>? identityErrors;
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    [SupplyParameterFromQuery]
+    public string? Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private InputModel? Input { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = await UserManager.FindByIdAsync(Id);
+        identityRoles = await RoleManager.Roles.ToListAsync();
+        currentRole = (await UserManager.GetRolesAsync(User)).FirstOrDefault();
+
+        if (User != null)
+        {
+            Input ??= new InputModel
+                {
+                    Email = User.Email,
+                    FirstName = User.FirstName,
+                    LastName = User.LastName,
+                    PhoneNumber = User.PhoneNumber,
+                    Role = currentRole
+                };
+        }
+        isLoading = false;
+    }
+
+    private async Task UpdateUser()
+    {
+        User.UserName = Input.Email;
+        User.NormalizedUserName = Input.Email.ToUpper();
+        User.Email = Input.Email;
+        User.FirstName = Input.FirstName;
+        User.LastName = Input.LastName;
+        User.PhoneNumber = Input.PhoneNumber;
+        User.LastUpdated = DateTime.UtcNow;
+        newRole = Input.Role;
+
+        var result = await UserManager.UpdateAsync(User);
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+
+        if (currentRole != newRole)
+        {
+            var roleRemove = await UserManager.RemoveFromRoleAsync(User, currentRole);
+            if (!roleRemove.Succeeded)
+            {
+                identityErrors = roleRemove.Errors;
+                return;
+            }
+
+            var roleAdd = await UserManager.AddToRoleAsync(User, newRole);
+            if (!roleAdd.Succeeded)
+            {
+                identityErrors = roleAdd.Errors;
+                return;
+            }
+        }
+
+        Logger.LogInformation("Updated User Succeessfully");
+        NavigationManager.NavigateTo("/Manage/Users/");
+
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = "";
+
+        [Phone]
+        [Display(Name = "Phone number")]
+        public string? PhoneNumber { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        public string Role { get; set; } = "";
+    }
+}

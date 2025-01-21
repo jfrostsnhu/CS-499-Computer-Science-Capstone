@@ -1,0 +1,63 @@
+﻿@page "/Manage/Users/details"
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Account
+@using InventoryManagerApp.Components.Account.Shared
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>User Details</PageTitle>
+
+<h1>View User Details</h1>
+
+<div>
+    <hr />
+    @if (User is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">User Name</dt>
+            <dd class="col-sm-10">@User.UserName</dd>
+            <dt class="col-sm-2">Email</dt>
+            <dd class="col-sm-10">@User.Email</dd>
+            <dt class="col-sm-2">First Name</dt>
+            <dd class="col-sm-10">@User.FirstName</dd>
+            <dt class="col-sm-2">Last Name</dt>
+            <dd class="col-sm-10">@User.LastName</dd>
+            <dt class="col-sm-2">Phone Number</dt>
+            <dd class="col-sm-10">@User.PhoneNumber</dd>
+            <dt class="col-sm-2">Role</dt>
+            <dd class="col-sm-10">@UserRole</dd>
+        </dl>
+        <div>
+            <a class="btn btn-secondary" href="@($"/Manage/Users")">Back</a>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? User;
+    private string? UserRole;
+
+    [SupplyParameterFromQuery]
+    private string? Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = await UserManager.FindByIdAsync(Id);
+
+        if (User is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        var roles = await UserManager.GetRolesAsync(User);
+        UserRole = roles.FirstOrDefault() ?? "None";
+    }
+}

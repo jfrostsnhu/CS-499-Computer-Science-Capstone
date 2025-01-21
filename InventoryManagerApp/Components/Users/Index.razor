@@ -1,0 +1,86 @@
+﻿@page "/Manage/Users"
+
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Account
+@using InventoryManagerApp.Components.Account.Shared
+
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Manage Users</PageTitle>
+
+<h1>Manage Users</h1>
+
+<p>
+    <a class="btn btn-outline-primary" href="Manage/Users/create">+ Add User</a>
+</p>
+
+@if (Users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="Users.AsQueryable()" TGridItem="UserWithRole">
+        <PropertyColumn Property="user => user.Email" />
+        <PropertyColumn Property="user => user.FirstName" />
+        <PropertyColumn Property="user => user.LastName" />
+        <PropertyColumn Property="user => user.PhoneNumber" />
+        <PropertyColumn Property="user => user.Role" />
+
+        <TemplateColumn Context="user">
+            <a class="btn btn-info" href="@($"Manage/Users/details?id={user.Id}")">Details</a> |
+            <a class="btn btn-warning" href="@($"Manage/Users/edit?id={user.Id}")">Edit</a> |
+            <a class="btn btn-danger" href="@($"Manage/Users/delete?id={user.Id}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private List<UserWithRole>? Users;
+
+    protected override async Task OnInitializedAsync()
+    {
+       await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        var applicationUsers = await UserManager.Users.ToListAsync();
+
+        Users = new List<UserWithRole>();
+
+        foreach (var user in applicationUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            Users.Add(new UserWithRole
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    Role = roles.FirstOrDefault() ?? "None"
+                });
+        }
+
+        StateHasChanged();
+    }
+
+    private sealed class UserWithRole
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+    }
+}
