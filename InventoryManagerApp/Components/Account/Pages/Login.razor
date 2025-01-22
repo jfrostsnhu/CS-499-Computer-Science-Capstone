@@ -1,4 +1,4 @@
-﻿@page "/Account/Login"
+﻿@page "/Login"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
@@ -12,22 +12,25 @@
 
 <PageTitle>Log in</PageTitle>
 
+<!-- This page enables the user to login or register an account -->
+
 <h1>Log in</h1>
+<br />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-4 justify-content-center">
         <section>
             <StatusMessage Message="@errorMessage" />
             <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
                 <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
+                <h3>Please enter your credentails below.</h3>
                 <hr />
                 <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <div class="form-floating mb-3 w-50">
+                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="email@domain.com" />
                     <label for="email" class="form-label">Email</label>
                     <ValidationMessage For="() => Input.Email" class="text-danger" />
                 </div>
-                <div class="form-floating mb-3">
+                <div class="form-floating mb-3 w-50">
                     <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
                     <label for="password" class="form-label">Password</label>
                     <ValidationMessage For="() => Input.Password" class="text-danger" />
@@ -38,29 +41,14 @@
                         Remember me
                     </label>
                 </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
+                <div class="d-flex justify-content-start gap-1">
+                    <a href="/Register" role="button" class="w-25 btn btn-lg btn-purple">Register</a>
+                    <button type="submit" class="w-25 btn btn-lg btn-purple">Log in</button>
                 </div>
             </EditForm>
         </section>
     </div>
     <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
     </div>
 </div>
 
@@ -87,38 +75,51 @@
 
     public async Task LoginUser()
     {
-        // This doesn't count login failures towards account lockout
-        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+        // Log in user or throw an error
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         if (result.Succeeded)
         {
-            Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo(ReturnUrl);
-        }
-        else if (result.RequiresTwoFactor)
-        {
-            RedirectManager.RedirectTo(
-                "Account/LoginWith2fa",
-                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
-        }
-        else if (result.IsLockedOut)
-        {
-            Logger.LogWarning("User account locked out.");
-            RedirectManager.RedirectTo("Account/Lockout");
+            // Validate ReturnUrl before redirecting
+            if (string.IsNullOrEmpty(ReturnUrl) || !IsLocalUrl(ReturnUrl))
+            {
+                // Open redirect to root
+                RedirectManager.RedirectTo("/");
+            }
+            else
+            {
+                // Successful login
+                Logger.LogInformation("User logged in.");
+                RedirectManager.RedirectTo(ReturnUrl);
+            }
         }
         else
         {
+            // Error with login
             errorMessage = "Error: Invalid login attempt.";
         }
+    }
+
+    // Helper method to validate ReturnUrl
+    private bool IsLocalUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return false;
+        }
+
+        // Ensure the URL is relative to prevent open redirects
+        return Uri.TryCreate(url, UriKind.Relative, out _);
     }
 
     private sealed class InputModel
     {
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [EmailAddress]
         public string Email { get; set; } = "";
 
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 

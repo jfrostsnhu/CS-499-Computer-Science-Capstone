@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace InventoryManagerApp.Components.Account
 {
+    // This class is used to access the user identity context for the session
     internal sealed class IdentityUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager)
     {
         public async Task<ApplicationUser> GetRequiredUserAsync(HttpContext context)

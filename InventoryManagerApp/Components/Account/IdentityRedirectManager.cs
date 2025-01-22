@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace InventoryManagerApp.Components.Account
 {
+    /* This class redirects the user based on their session and validation state */
     internal sealed class IdentityRedirectManager(NavigationManager navigationManager)
     {
         public const string StatusCookieName = "Identity.StatusMessage";

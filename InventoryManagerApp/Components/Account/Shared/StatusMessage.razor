@@ -1,5 +1,6 @@
 ﻿@if (!string.IsNullOrEmpty(DisplayMessage))
 {
+    // Display Message
     var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
     <div class="alert alert-@statusMessageClass" role="alert">
         @DisplayMessage
@@ -19,10 +20,12 @@
 
     protected override void OnInitialized()
     {
+        // Get cookie message
         messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
         if (messageFromCookie is not null)
         {
+            // Delete cookie message
             HttpContext.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
         }
     }

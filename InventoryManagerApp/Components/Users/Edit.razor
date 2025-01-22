@@ -30,11 +30,6 @@ else
                 <ValidationSummary role="alert"/>
                  <input type="hidden" name="User.Id" value="@User.Id" />
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email:</label>
-                    <InputText @bind-Value="Input.Email" class="form-control" />
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="mb-3">
                     <label for="firstname" class="form-label">First Name:</label>
                     <InputText @bind-Value="Input.FirstName" class="form-control" />
                     <ValidationMessage For="() => Input.FirstName" class="text-danger" />
@@ -43,6 +38,11 @@ else
                     <label for="lastname" class="form-label">Last Name:</label>
                     <InputText @bind-Value="Input.LastName" class="form-control" />
                     <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <InputText @bind-Value="Input.Email" class="form-control" />
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
                 </div>
                 <div class="mb-3">
                     <label for="phonenumber" class="form-label">Phone Number:</label>

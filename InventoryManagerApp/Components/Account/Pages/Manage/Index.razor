@@ -8,32 +8,49 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>My Account</PageTitle>
 
-<h3>Profile</h3>
+<!-- This page enables the user to change their name or phone number -->
+
+<h3>My Account</h3>
+<hr />
+<br />
+<div class="w-50">
 <StatusMessage />
-
+</div>
 <div class="row">
     <div class="col-md-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <EditForm Model="Input" FormName="myAccount" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
+                <InputText @bind-Value="Input.FirstName" class="form-control w-50" autocomplete="firstname" aria-required="true" placeholder="First name" />
+                <label for="firstname">First name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" class="form-control w-50" autocomplete="lastname" aria-required="true" placeholder="Last name" />
+                <label for="lastname">Last name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" value="@username" class="form-control w-50" placeholder="Please choose your username." disabled />
                 <label for="username" class="form-label">Username</label>
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <InputText @bind-Value="Input.PhoneNumber" class="form-control w-50" oninput="formatPhoneNumber(this)" placeholder=" Please enter your phone number." />
                 <label for="phone-number" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            <button type="submit" class="w-50 btn btn-lg btn-purple">Save</button>
         </EditForm>
     </div>
 </div>
 
 @code {
+    private IEnumerable<IdentityError>? identityErrors;
     private ApplicationUser user = default!;
     private string? username;
     private string? phoneNumber;
@@ -46,31 +63,100 @@
 
     protected override async Task OnInitializedAsync()
     {
+        /*    When the page loads, get user object      *
+         * for the session. Then fetch their username   *
+         *    and phoneNumber. Then set them in the     *
+         *               form fields.                   */
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
+        Input.FirstName ??= user.FirstName;
+        Input.LastName ??= user.LastName;
         Input.PhoneNumber ??= phoneNumber;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Validate Input.PhoneNumber format 123-456-7890
+            await JSRuntime.InvokeVoidAsync("formatPhoneNumber");
+        }
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (Input.PhoneNumber != phoneNumber)
+        // Only update if input value does not match user.Field value
+        if (Input.FirstName != user.FirstName || Input.LastName != user.LastName)
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+            // Update the user object with changed name
+            user.FirstName = Input.FirstName;
+            user.LastName = Input.LastName;
+
+            // Update the data store
+            var result = await UserManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
+        }
+
+        // Only update if input value does not match user.phoneNumber value and has no whitespace
+        if (!string.IsNullOrWhiteSpace(Input.PhoneNumber) && Input.PhoneNumber != phoneNumber)
+        {
+            // Format the phone number 123-456-7890
+            var formattedPhoneNumber = FormatPhoneNumber(Input.PhoneNumber);
+
+            // Update formattedPhoneNumber in the data store
+            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, formattedPhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
                 RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
             }
         }
 
+        // Refresh user session
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
 
+    private string? FormatPhoneNumber(string? phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber))
+        {
+            // Return null if field is blank
+            return null;
+        }
+
+        // Remove all non-digit characters
+        var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
+
+        // Check if the phone number is exactly 10 digits
+        if (digits.Length != 10)
+        {
+            throw new ArgumentException("Phone number must contain exactly 10 digits.");
+        }
+
+        // Format the number as 123-456-7890
+        return $"{digits.Substring(0, 3)}-{digits.Substring(3, 3)}-{digits.Substring(6)}";
+    }
+
     private sealed class InputModel
     {
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; }
+
         [Phone]
+        [RegularExpression(@"^\d{3}-\d{3}-\d{4}$", ErrorMessage = "Please enter a valid phone number up to 10 digits.")]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
     }
