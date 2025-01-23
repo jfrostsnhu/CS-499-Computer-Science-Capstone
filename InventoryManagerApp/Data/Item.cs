@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagerApp.Data
 {
+    // Entity model for Items
     public class Item
     {
         [Key]

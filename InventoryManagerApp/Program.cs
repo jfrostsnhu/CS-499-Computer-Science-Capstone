@@ -1,5 +1,6 @@
 using InventoryManagerApp.Components;
 using InventoryManagerApp.Components.Account;
+using InventoryManagerApp.Components.Services;
 using InventoryManagerApp.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,8 +14,10 @@ namespace InventoryManagerApp
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContext' not found.")));
-
+            options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection") 
+                    ?? throw new InvalidOperationException("Connection string 'ApplicationDbContext' not found.")));
+            builder.Services.AddSingleton<LowStockMonitorService>();
+            builder.Services.AddHostedService<LowStockMonitorBackgroundService>();
 
             builder.Services.AddQuickGridEntityFrameworkAdapter();
 

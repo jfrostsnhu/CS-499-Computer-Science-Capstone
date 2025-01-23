@@ -52,11 +52,6 @@
                 <InputNumber id="quantity" @bind-Value="Item.Quantity" class="form-control" aria-required="true"/> 
                 <ValidationMessage For="() => Item.Quantity" class="text-danger" /> 
             </div>        
-            <div class="mb-3">
-                <label for="lastupdated" class="form-label">Last Updated:</label> 
-                <InputDate id="lastupdated" @bind-Value="Item.LastUpdated" class="form-control" /> 
-                <ValidationMessage For="() => Item.LastUpdated" class="text-danger" /> 
-            </div>
             <a class="btn btn-secondary" href="/Manage/Inventory">Back</a>
             <button type="submit" class="btn btn-success">Save</button>
         </EditForm>
@@ -70,6 +65,7 @@
     private async Task AddItem()
     {
         using var context = DbFactory.CreateDbContext();
+        Item.LastUpdated = DateTime.UtcNow;
         context.Item.Add(Item);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/Manage/Inventory/");

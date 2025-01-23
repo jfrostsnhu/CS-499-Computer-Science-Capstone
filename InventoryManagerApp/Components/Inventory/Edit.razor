@@ -60,8 +60,7 @@ else
                 </div>
                 <div class="mb-3">
                     <label for="lastupdated" class="form-label">Last Updated:</label>
-                    <InputDate id="lastupdated" @bind-Value="Item.LastUpdated" class="form-control" />
-                    <ValidationMessage For="() => Item.LastUpdated" class="text-danger" />
+                    <p>@Item.LastUpdated.ToString("G")</p>
                 </div>
                 <a class="btn btn-secondary" href="/Manage/Inventory/">Back</a>
                 <button type="submit" class="btn btn-success">Save</button>
@@ -91,6 +90,7 @@ else
     private async Task UpdateItem()
     {
         using var context = DbFactory.CreateDbContext();
+        Item!.LastUpdated = DateTime.UtcNow;
         context.Attach(Item!).State = EntityState.Modified;
 
         try

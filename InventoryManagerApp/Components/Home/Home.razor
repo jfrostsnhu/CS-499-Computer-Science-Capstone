@@ -1,7 +1,116 @@
-﻿@page "/"
+﻿@using InventoryManagerApp.Data
+@using InventoryManagerApp.Components.Services
+@using Microsoft.EntityFrameworkCore
+
+@inject LowStockMonitorService MonitorService
+@inject ILogger<Home> logger
+@inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
+
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- This page is routed to when the user authenticates or clicks Home link -->
 
-Welcome to your new app.
+<h1>Home</h1>
+<br />
+<h3>Low Stock Notifications</h3>
+<hr/>
+<br />
+@if (LowStockItems == null || !LowStockItems.Any())
+{
+    <p>There are currently no low stock items! </p>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in LowStockItems)
+        {
+            <div class="card card-purple custom-card m-2" style="width: 24rem; border-top:
+                        5px solid @(item.Quantity <= 5 ? "red" : "yellow"); border-left: 2px solid #6f42c1;
+                        border-right: 2px solid #6f42c1; border-bottom: 2px solid #6f42c1">
+                <div class="card-body" style="color: #6f42c1;">
+                    <div class="d-flex justify-content-center">
+                        <h5 class="card-title"><strong>@item.Description</strong></h5>
+                    </div>
+                    <hr style="color: #6f42c1"/>
+                    <p class="card-text">
+                        <strong>SKU:</strong> @item.SKU<br />
+                        <strong>Vendor:</strong> @item.Vendor<br />
+                        <strong>UPC:</strong> @item.UPC<br />
+                        <strong>Cost:</strong> $@item.Cost<br />
+                        <strong>Price:</strong> $@item.Price<br />
+                        <strong>Quantity:</strong> @item.Quantity<br />
+                        <strong>Last Updated:</strong> @item.LastUpdated
+                    </p>
+                    <div class="d-flex justify-content-center">
+                        <a href="@($"Manage/Inventory/details?id={item.Id}")" class="btn btn-purple w-50"
+                        aria-label="View details for @item.Description">View Item Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private const int taskDelay = 5000;
+    private List<LowStockItemViewModel>? LowStockItems;
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Instantiate cancel token source for polling function
+        _cancellationTokenSource = new CancellationTokenSource();
+        // Load items
+        await LoadLowStockItemsAsync();
+        /* Start polling periodically to new notifications on load *
+         *            uses a background service                    */
+        PollForUpdatesAsync();
+    }
+
+    // Collect notificatiosn from database for display on the page
+    private async Task LoadLowStockItemsAsync()
+    {
+        // Get the item entity and use it to map to the view model
+        using var context = DbFactory.CreateDbContext();
+        LowStockItems = await context.LowStockNotifications
+            .Include(n => n.Item)
+            .Select(n => new LowStockItemViewModel
+                {
+                    Id = n.ItemId,
+                    SKU = n.Item!.SKU,
+                    UPC = n.Item.UPC,
+                    Description = n.Item.Description,
+                    Vendor = n.Item.Vendor,
+                    Cost = n.Item.Cost,
+                    Price = n.Item.Price,
+                    Quantity = n.Item.Quantity,
+                    LastUpdated = n.Item.LastUpdated
+                })
+            .ToListAsync();
+    }
+
+    // Periodically checks for new notifications and rerenders the page
+    private async Task PollForUpdatesAsync()
+    {
+        while (!_cancellationTokenSource!.Token.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(taskDelay, _cancellationTokenSource.Token);
+                await LoadLowStockItemsAsync();
+                StateHasChanged();
+            }
+            catch (TaskCanceledException)
+            {
+                // Task was canceled, safely exit the loop
+                break;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred when polling for updates.");
+            }
+        }
+    }
+}
