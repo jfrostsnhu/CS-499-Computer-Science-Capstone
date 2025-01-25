@@ -1,18 +1,19 @@
 ﻿@page "/Manage/Users/details"
-
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Identity
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
 @using InventoryManagerApp.Components.Account.Shared
-
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>User Details</PageTitle>
 
-<h1>View User Details</h1>
+<!-- This page is used to view user details -->
 
+<h1>View User Details</h1>
+<br />
 <div>
     <hr />
     @if (User is null)
@@ -47,6 +48,7 @@
     [SupplyParameterFromQuery]
     private string? Id { get; set; }
 
+    // Gets the user entity by Id
     protected override async Task OnInitializedAsync()
     {
         User = await UserManager.FindByIdAsync(Id);
@@ -57,6 +59,7 @@
             return;
         }
 
+        // Gets the user's role from the role store
         var roles = await UserManager.GetRolesAsync(User);
         UserRole = roles.FirstOrDefault() ?? "None";
     }

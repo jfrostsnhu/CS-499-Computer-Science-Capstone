@@ -1,64 +1,81 @@
 ﻿@page "/Manage/Users"
-
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
 @using InventoryManagerApp.Components.Account.Shared
-
-
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin")]
+
 
 <PageTitle>Manage Users</PageTitle>
 
+<!-- This page is used to view and manage users -->
+
 <h1>Manage Users</h1>
-
-<p>
-    <a class="btn btn-outline-primary" href="Manage/Users/create">+ Add User</a>
-</p>
-
+<br />
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <input type="search" class="form-control searchbox" placeholder="Search..." @bind="userFilter" @bind:event="oninput" />
+    <a class="btn btn-purple" href="Manage/Users/create"><i class="bi bi-plus-lg icon-margin-r10"></i> Add User</a>
+</div>
+<hr />
+<br />
 @if (Users == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    <QuickGrid Class="table" Items="Users.AsQueryable()" TGridItem="UserWithRole">
-        <PropertyColumn Property="user => user.Email" />
-        <PropertyColumn Property="user => user.FirstName" />
-        <PropertyColumn Property="user => user.LastName" />
-        <PropertyColumn Property="user => user.PhoneNumber" />
-        <PropertyColumn Property="user => user.Role" />
-
+    <QuickGrid Class="table" Pagination="pagination" Items="FilteredUsers" TGridItem="UserWithRole">
+        <PropertyColumn Sortable="true" Property="user => user.Email" />
+        <PropertyColumn Sortable="true" Property="user => user.FirstName" />
+        <PropertyColumn Sortable="true" Property="user => user.LastName" />
+        <PropertyColumn Sortable="true" Property="user => user.PhoneNumber" />
+        <PropertyColumn Sortable="true" Property="user => user.Role" />
         <TemplateColumn Context="user">
-            <a class="btn btn-info" href="@($"Manage/Users/details?id={user.Id}")">Details</a> |
-            <a class="btn btn-warning" href="@($"Manage/Users/edit?id={user.Id}")">Edit</a> |
-            <a class="btn btn-danger" href="@($"Manage/Users/delete?id={user.Id}")">Delete</a>
+            <a class="btn btn-purple" href="@($"Manage/Users/details?id={user.Id}")">Details</a> |
+            <a class="btn btn-purple" href="@($"Manage/Users/edit?id={user.Id}")">Edit</a> |
+            <a class="btn btn-purple" href="@($"Manage/Users/delete?id={user.Id}")">Delete</a>
         </TemplateColumn>
     </QuickGrid>
+    <Paginator State="pagination" />
 }
 
 @code {
+    private string userFilter = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 15 };
     private List<UserWithRole>? Users;
 
+    // Filtered users by email, first name, last name, role, or phone number
+    private IQueryable<UserWithRole> FilteredUsers =>
+        Users?.Where(user =>
+            (user.Email?.Contains(userFilter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (user.FirstName?.Contains(userFilter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (user.LastName?.Contains(userFilter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (user.Role?.Contains(userFilter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (user.PhoneNumber?.Contains(userFilter, StringComparison.OrdinalIgnoreCase) ?? false))
+        .AsQueryable() ?? Enumerable.Empty<UserWithRole>().AsQueryable();
+
+    // Load the users list on render
     protected override async Task OnInitializedAsync()
     {
        await LoadUsers();
     }
 
+    // Gets a list of users and their roles
     private async Task LoadUsers()
     {
+        // Gets a list of users
         var applicationUsers = await UserManager.Users.ToListAsync();
 
         Users = new List<UserWithRole>();
-
+        // Iterate through all users in the list
         foreach (var user in applicationUsers)
         {
+            // Add each user and their role to new UserWithRole list
             var roles = await UserManager.GetRolesAsync(user);
             Users.Add(new UserWithRole
                 {
@@ -70,7 +87,7 @@ else
                     Role = roles.FirstOrDefault() ?? "None"
                 });
         }
-
+        // Tell the client to rerender
         StateHasChanged();
     }
 

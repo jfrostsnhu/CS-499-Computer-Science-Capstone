@@ -96,15 +96,7 @@
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Validate Input.PhoneNumber format 123-456-7890
-            await JSRuntime.InvokeVoidAsync("formatPhoneNumber");
-        }
-    }
-
+    // Registers a new user with the input from the form (EditText)
     public async Task RegisterUser(EditContext editContext)
     {
         var user = CreateUser();
@@ -147,7 +139,7 @@
         RedirectManager.RedirectTo(ReturnUrl);
     }
 
-    // Create new instance of AppUser
+    // Create new instance of ApplicationUser
     private ApplicationUser CreateUser()
     {
         try
@@ -204,6 +196,7 @@
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
 
+        [Required]
         [EmailAddress]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [Display(Name = "Email")]

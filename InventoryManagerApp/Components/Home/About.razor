@@ -3,12 +3,47 @@
 @using Microsoft.EntityFrameworkCore
 @page "/About"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>About</PageTitle>
 
-<!-- This page displays information about the application -->
+<!-- This page explains the application -->
 
-<h1>About</h1>
-<br />
-<h3>About this application...</h3>
-<hr/>
-<br />
+<div class="container mt-4">
+    <h1>About</h1>
+    <br />
+    <h3>About Inventory Manager v2</h3>
+    <hr />
+    <p>
+        This application is a project for a Computer Science Capstone course. It is a direct conversion from a previous project in CS-360 Mobile Programming where
+        a Java based Inventory Management application was developed to assist warehouse operations. The original Java project has been
+        successfully migrated and rebuilt in .NET 8 using the Blazor Server framework in C#.
+    </p>
+    <p>
+        The application is designed to provide an intuitive, responsive interface for managing inventory, user accounts, and system roles.
+        It incorporates modern user authentication, role-based authorization, and several core features to streamline inventory management
+        tasks for warehouses.
+    </p>
+
+    <h3>Key Features</h3>
+    <ul>
+        <li><strong>User Authentication and Role-Based Authorization:</strong> Secure login and role management for administrators and warehouse staff.</li>
+        <li><strong>Inventory Management Module:</strong> Manage inventory items with detailed item records, including SKU, UPC, cost, price, and quantity.</li>
+        <li><strong>Low Stock Notifications:</strong> An efficient AVL Tree algorithm powers low stock warnings with color-coded banners for warning and critical levels.</li>
+        <li><strong>Role Management:</strong> Administrators can create, assign, and manage roles with fine-grained control over access to different parts of the application.</li>
+        <li><strong>User Management:</strong> Manage user accounts with options to create, edit, and delete users, as well as assign roles.</li>
+        <li><strong>Account Settings:</strong> Allow users to update their own account details, such as passwords and profile information.</li>
+        <li><strong>Responsive and Intuitive Interface:</strong> The application is built with a responsive design, ensuring usability across devices of different screen sizes.</li>
+    </ul>
+
+    <h3>Technical Highlights</h3>
+    <ul>
+        <li>Rebuilt in .NET 8 using Blazor Server for modern web application architecture.</li>
+        <li>Uses Entity Framework Core for database interactions.</li>
+        <li>Implements Identity Framework for secure authentication and authorization.</li>
+        <li>Efficient AVL Tree algorithm for fast and reliable low stock detection and notifications.</li>
+    </ul>
+
+    <p>
+        This application showcases the integration of software engineering concepts, data structures, and modern web development techniques.
+        It serves as an example of how existing projects can be migrated to newer technologies while maintaining and enhancing core functionality.
+    </p>
+</div>

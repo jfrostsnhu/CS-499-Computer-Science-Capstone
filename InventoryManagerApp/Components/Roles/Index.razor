@@ -19,9 +19,10 @@
     <a class="btn btn-purple" href="Manage/Roles/create"><i class="bi bi-plus-lg icon-margin-r10"></i> Add Role</a>
 </div>
 <hr />
+<br />
 <QuickGrid Class="table" Pagination="pagination" Items="FilteredRoles" TGridItem="IdentityRole">
     <PropertyColumn Title="Role Name" Sortable="true" Property="role => role.Name" />
-    <TemplateColumn Sortable="true" Context="role">
+    <TemplateColumn Title="Actions" Sortable="true" Context="role">
         <a class="btn btn-purple" href="@($"Manage/Roles/details?id={role.Id}")"><i class="bi bi-info-square icon-margin-r10"></i>Details</a> |
         <a class="btn btn-purple" href="@($"Manage/Roles/delete?id={role.Id}")"><i class="bi bi-trash3 icon-margin-r10"></i>Delete</a>
     </TemplateColumn>

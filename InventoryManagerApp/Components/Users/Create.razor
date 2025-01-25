@@ -1,26 +1,25 @@
 ﻿@page "/Manage/Users/create"
-
 @using System.ComponentModel.DataAnnotations
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
 @using InventoryManagerApp.Components.Account.Shared
 @using Microsoft.EntityFrameworkCore
-
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
 @inject SignInManager<ApplicationUser> SignInManager
 @inject RoleManager<IdentityRole> RoleManager
 @inject ILogger<Create> Logger
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Add User</PageTitle>
 
-<h1>Add User</h1>
+<!-- This page is used to add a new user -->
 
+<h1>Add User</h1>
+<br />
 <h3>Enter user details below.</h3>
 <hr />
 @if (isLoading)
@@ -34,52 +33,72 @@ else
             <StatusMessage Message="@Message" />
             <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="AddUser" FormName="addUser">
                 <DataAnnotationsValidator />
-                <h2>Add a new user.</h2>
-                <hr />
                 <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.FirstName" class="form-control" autocomplete="firstname" aria-required="true" placeholder="First name" />
-                    <label for="firstname">First name</label>
-                    <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.FirstName" class="form-control" autocomplete="firstname" aria-required="true" placeholder="First name" />
+                            <label for="firstname">First name</label>
+                            <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.LastName" class="form-control" autocomplete="lastname" aria-required="true" placeholder="Last name" />
+                            <label for="lastname">Last name</label>
+                            <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.LastName" class="form-control" autocomplete="lastname" aria-required="true" placeholder="Last name" />
-                    <label for="lastname">Last name</label>
-                    <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <label for="email">Email</label>
+                            <ValidationMessage For="() => Input.Email" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.PhoneNumber" class="form-control" oninput="formatPhoneNumber(this)" placeholder=" Please enter your phone number." />
+                            <label for="phone-number" class="form-label">Phone number</label>
+                            <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Phone Number." />
-                    <label for="phone-number" class="form-label">Phone number</label>
-                    <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                            <label for="password">Password</label>
+                            <ValidationMessage For="() => Input.Password" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="confirm password" />
+                            <label for="confirm-password">Confirm Password</label>
+                            <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="email@domain.com" />
-                    <label for="email">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                    <label for="password">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                    <label for="confirm-password">Confirm Password</label>
-                    <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="userrole" class="form-label">Role:</label>
-                    <InputSelect @bind-Value="Input.Role" class="form-control">
-                        @foreach (var role in identityRoles)
-                        {
-                            <option value="@role.Name">@role.Name</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Input.Role" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-floating mb-3">
+                            <InputSelect @bind-Value="Input.Role" class="form-select" placeholder="Role">
+                                @foreach (var role in identityRoles)
+                                {
+                                    <option value="@role.Name">@role.Name</option>
+                                }
+                            </InputSelect>
+                            <label for="role">Role</label>
+                            <ValidationMessage For="() => Input.Role" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
                 <br />
-                <a class="w-25 btn btn-secondary" href="/Manage/Users">Back</a>
-                <button type="submit" class="w-25 btn btn-success">Save</button>
+                <a class="btn btn-secondary" href="/Manage/Users">Back</a>
+                <button type="submit" class="btn btn-purple">Save</button>
             </EditForm>
         </div>
     </div>
@@ -99,46 +118,50 @@ else
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
+    // Gets the roles from the database and renders the role list
     protected override async Task OnInitializedAsync()
     {
         identityRoles = await RoleManager.Roles.ToListAsync();
         isLoading = false;
     }
 
-
+    // Create a new user
     public async Task AddUser(EditContext editContext)
     {
+        // Instantiate new user entity
         var user = CreateUser();
-
+        
+        // Load input values into new user entity
         user.FirstName = Input.FirstName;
         user.LastName = Input.LastName;
         user.PhoneNumber = Input.PhoneNumber;
         newRole = Input.Role;
 
+        // Set username, email, phone number then update the database with the entity
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
         await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
-
         if (!result.Succeeded)
         {
             identityErrors = result.Errors;
             return;
         }
-
+        // Add the new user to role
         var roleAdd = await UserManager.AddToRoleAsync(user, newRole);
         if (!roleAdd.Succeeded)
         {
             identityErrors = roleAdd.Errors;
             return;
         }
-
+        // Redirect user to Manage Users screen on success
         Logger.LogInformation("User created a new account with password.");
 
         NavigationManager.NavigateTo("/Manage/Users/");
     }
 
+    // Creates a new instance of ApplicationUser
     private ApplicationUser CreateUser()
     {
         try
@@ -152,6 +175,7 @@ else
         }
     }
 
+    // Get the email store
     private IUserEmailStore<ApplicationUser> GetEmailStore()
     {
         if (!UserManager.SupportsUserEmail)
@@ -164,19 +188,23 @@ else
     private sealed class InputModel
     {
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
         [Display(Name = "First Name")]
         public string FirstName { get; set; } = "";
 
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = "";
 
         [Phone]
         [Display(Name = "Phone number")]
+        [RegularExpression(@"^\d{3}-\d{3}-\d{4}$", ErrorMessage = "Please enter a valid phone number up to 10 digits.")]
         public string? PhoneNumber { get; set; }
 
         [Required]
         [EmailAddress]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
 

@@ -1,21 +1,22 @@
 ﻿@page "/Manage/Users/edit"
-
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Identity
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
 @using InventoryManagerApp.Components.Account.Shared
 @using System.ComponentModel.DataAnnotations
-
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<IdentityRole> RoleManager
 @inject NavigationManager NavigationManager
 @inject ILogger<Edit> Logger
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Edit User</PageTitle>
 
-<h1>Edit User</h1>
+<!-- This page is used to edit user details -->
 
+<h1>Edit User</h1>
+<br />
 <hr />
 @if (isLoading)
 {
@@ -28,30 +29,41 @@ else
             <EditForm method="post" Model="Input" OnValidSubmit="UpdateUser" FormName="editUser" Enhance>
                 <DataAnnotationsValidator />
                 <ValidationSummary role="alert"/>
-                 <input type="hidden" name="User.Id" value="@User.Id" />
-                <div class="mb-3">
-                    <label for="firstname" class="form-label">First Name:</label>
-                    <InputText @bind-Value="Input.FirstName" class="form-control" />
-                    <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.FirstName" class="form-control" autocomplete="firstname" aria-required="true" placeholder="First name" />
+                            <label for="firstname">First name</label>
+                            <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.LastName" class="form-control" autocomplete="lastname" aria-required="true" placeholder="Last name" />
+                            <label for="lastname">Last name</label>
+                            <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="lastname" class="form-label">Last Name:</label>
-                    <InputText @bind-Value="Input.LastName" class="form-control" />
-                    <ValidationMessage For="() => Input.LastName" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email:</label>
-                    <InputText @bind-Value="Input.Email" class="form-control" />
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="phonenumber" class="form-label">Phone Number:</label>
-                    <InputText @bind-Value="Input.PhoneNumber" class="form-control" />
-                    <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <label for="email">Email</label>
+                            <ValidationMessage For="() => Input.Email" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.PhoneNumber" class="form-control" oninput="formatPhoneNumber(this)" placeholder=" Please enter your phone number." />
+                            <label for="phone-number" class="form-label">Phone number</label>
+                            <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                        </div>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="userrole" class="form-label">Role:</label>
-                    <InputSelect @bind-Value="Input.Role" class="form-control" >
+                    <InputSelect @bind-Value="Input.Role" class="form-select w-25" >
                         @foreach (var role in identityRoles)
                         {
                             <option value="@role.Name">@role.Name</option>
@@ -60,8 +72,8 @@ else
                     <ValidationMessage For="() => Input.Role" class="text-danger" />
                 </div>
                 <br />
-                <a class="w-25 btn btn-secondary" href="/Manage/Users/">Back</a>
-                <button type="submit" class="w-25 btn btn-success">Save</button>
+                <a class="btn btn-secondary" href="/Manage/Users/">Back</a>
+                <button type="submit" class="btn btn-purple">Save</button>
             </EditForm>
         </div>
     </div>
@@ -69,10 +81,6 @@ else
 
 @code {
     private bool isLoading = true;
-    private string? Email = string.Empty;
-    private string? FirstName = string.Empty;
-    private string? LastName = string.Empty;
-    private string? PhoneNumber = string.Empty;
     private string? currentRole = string.Empty;
     private string? newRole = string.Empty;
     private List<IdentityRole>? identityRoles;
@@ -86,28 +94,38 @@ else
     [SupplyParameterFromForm]
     private InputModel? Input { get; set; }
 
+    // Get user by Id
     protected override async Task OnInitializedAsync()
     {
         User = await UserManager.FindByIdAsync(Id);
+        if (User == null)
+        {
+            Logger.LogError($"User with ID {Id} not found.");
+            NavigationManager.NavigateTo("/Manage/Users/");
+            return;
+        }
+
+        // Get all roles and the context user's role
         identityRoles = await RoleManager.Roles.ToListAsync();
         currentRole = (await UserManager.GetRolesAsync(User)).FirstOrDefault();
 
-        if (User != null)
-        {
-            Input ??= new InputModel
-                {
-                    Email = User.Email,
-                    FirstName = User.FirstName,
-                    LastName = User.LastName,
-                    PhoneNumber = User.PhoneNumber,
-                    Role = currentRole
-                };
-        }
+        // Prepopulate input model from user entity
+        Input ??= new InputModel
+            {
+                Email = User.Email,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                PhoneNumber = User.PhoneNumber,
+                Role = currentRole
+            };
+
         isLoading = false;
     }
 
+    // Updates the user details
     private async Task UpdateUser()
     {
+        // Update user entity from input values
         User.UserName = Input.Email;
         User.NormalizedUserName = Input.Email.ToUpper();
         User.Email = Input.Email;
@@ -117,15 +135,17 @@ else
         User.LastUpdated = DateTime.UtcNow;
         newRole = Input.Role;
 
+        // Update the user in the user store
         var result = await UserManager.UpdateAsync(User);
         if (!result.Succeeded)
         {
             identityErrors = result.Errors;
             return;
         }
-
+        // Only update role if changed
         if (currentRole != newRole)
         {
+            // Remove user from current role
             var roleRemove = await UserManager.RemoveFromRoleAsync(User, currentRole);
             if (!roleRemove.Succeeded)
             {
@@ -133,6 +153,7 @@ else
                 return;
             }
 
+            // Add user to new role
             var roleAdd = await UserManager.AddToRoleAsync(User, newRole);
             if (!roleAdd.Succeeded)
             {
@@ -141,6 +162,7 @@ else
             }
         }
 
+        // On success redirect to Manage Users screen
         Logger.LogInformation("Updated User Succeessfully");
         NavigationManager.NavigateTo("/Manage/Users/");
 
@@ -149,19 +171,23 @@ else
     private sealed class InputModel
     {
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
         [Display(Name = "First Name")]
         public string FirstName { get; set; } = "";
 
         [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = "";
 
         [Phone]
         [Display(Name = "Phone number")]
+        [RegularExpression(@"^\d{3}-\d{3}-\d{4}$", ErrorMessage = "Please enter a valid phone number up to 10 digits.")]
         public string? PhoneNumber { get; set; }
 
         [Required]
         [EmailAddress]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
 
