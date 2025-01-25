@@ -85,3 +85,73 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.dropdown-border-purple {
+    border: 1px;
+    border-color: #6f42c1;
+}
+
+.dropdown-menu {
+    border-width: 2px !important;
+    border-color: #6f42c1 !important;
+}
+
+.dropdown-menu .dropdown-item {
+    width: 160px !important;
+    text-align: left !important;
+    color: #6f42c1 !important;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: rgb(110 66 193 / .4) !important;
+    width: 154px !important;
+}
+
+.dropdown-divider {
+    background-color: #6f42c1 !important;
+}
+
+.btn-outline-purple {
+    color: white;
+    background-color: #6f42c1;
+    border-color: white;
+}
+
+.btn-outline-purple:hover {
+    background-color: white;
+    color: #6f42c1;
+    border-color: #7c42c1
+}
+
+.btn-outline-purple:focus, .btn-outline-purple:active {
+    background-color: white;
+    color: #6f42c1;
+    border-color: white;
+}
+
+.top-row.px-4 {
+    background-color: #6f42c1 !important;
+}
+
+#logoutForm {
+    display: none;
+}
+
+.icon-margin-r15 {
+    margin-right: 15px;
+}
+
+.icon-margin-r10 {
+    margin-right: 10px !important;
+}
+
+.logo-image {
+    max-width: 150px;
+    max-height: 300px;
+    display: block;
+    margin: 0 auto;
+}
+
+.searchbox {
+    width: 300px;
+}

@@ -1,15 +1,16 @@
 ﻿@page "/Manage/Inventory/delete"
-
 @using Microsoft.EntityFrameworkCore
 @using InventoryManagerApp.Data
-
 @inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Delete Item</PageTitle>
 
-<h1>Delete Item</h1>
+<!-- This page is used to delete items -->
 
+<h1>Delete Item</h1>
+<br />
 <p>Are you sure you want to delete this item?</p>
 <div>
     <hr />
@@ -52,7 +53,7 @@
         </dl>
         <EditForm method="post" Model="item" OnValidSubmit="DeleteItem" FormName="deleteItem" Enhance>
             <a class="btn btn-secondary" href="/Manage/Inventory/">Back</a>
-            <button type="submit" class="btn btn-danger" disabled="@(item is null)">Delete</button>
+            <button type="submit" class="btn btn-purple" disabled="@(item is null)"><i class="bi bi-trash3 icon-margin-r10"></i>Delete</button>
         </EditForm>
     }
 </div>
@@ -65,19 +66,25 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize the context
         using var context = DbFactory.CreateDbContext();
+        // Finds the matching item by Id
         item = await context.Item.FirstOrDefaultAsync(m => m.Id == Id);
-
+        // Catch case where item is not found
         if (item is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
     }
 
+    // Deletes the item
     private async Task DeleteItem()
     {
+        // Initialize the context
         using var context = DbFactory.CreateDbContext();
+        // Remove the item
         context.Item.Remove(item!);
+        // Update the database and redirect to Manage Inventory
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/Manage/Inventory");
     }

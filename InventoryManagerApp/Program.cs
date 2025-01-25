@@ -1,3 +1,4 @@
+using Blazored.Toast;
 using InventoryManagerApp.Components;
 using InventoryManagerApp.Components.Account;
 using InventoryManagerApp.Components.Services;
@@ -55,6 +56,13 @@ namespace InventoryManagerApp
                 options.Password.RequireNonAlphanumeric = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireLowercase = true;
+            });
+
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.Name = "InventoryManager";
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+                options.LoginPath = "/Login";
             });
 
             var app = builder.Build();

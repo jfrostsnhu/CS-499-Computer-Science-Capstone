@@ -1,13 +1,46 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
 
 <div class="page">
-    <div class="sidebar purple">
+    <div class="sidebar">
         <NavMenu />
     </div>
-
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <AuthorizeView>
+            <Authorized>
+                    <div class="dropdown">
+                        <button class="btn btn-purple dropdown-toggle" aria-label="Options" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-fill icon-margin-r15"></i>
+                            <strong>@context.User.Identity?.Name</strong>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-start">
+                            <li><a class="dropdown-item" aria-label="My Account" href="/Account/Manage"><i class="bi bi-info-circle icon-margin-r15"></i><strong>My Account</strong></a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/About" aria-label="About"><i class="bi bi-info-circle icon-margin-r15"></i><strong>About</strong></a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a href="#" class="dropdown-item" onclick="submitLogoutForm(); return false;">
+                                    <i class="bi bi-box-arrow-left icon-margin-r15" aria-hidden="true" aria-label="Logout"></i><strong>Logout</strong>
+                                </a>
+                            </li>
+                            <form id="logoutForm" action="Account/Logout" method="post">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            </form>
+                        </ul>
+                    </div>
+            </Authorized>
+            <NotAuthorized>
+                    <div class="nav-item px-3">
+                        <a class="btn btn-outline-dark btn-outline-purple" href="/Login" role="button" aria-label="Login">
+                            Login
+                        </a>
+                    </div>
+            </NotAuthorized>
+        </AuthorizeView>
         </div>
 
         <article class="content px-4">
@@ -16,8 +49,33 @@
     </main>
 </div>
 
+<!-- Throw error if fault -->
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        // Gets the currentUrl for Logout functionality
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    // Updates currentUrl from LocationChangedEvents
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    // Disposes Resource LocationChanged
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

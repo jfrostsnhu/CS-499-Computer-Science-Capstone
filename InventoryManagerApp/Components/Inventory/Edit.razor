@@ -1,12 +1,14 @@
 ﻿@page "/Manage/Inventory/edit"
-
 @using Microsoft.EntityFrameworkCore
 @using InventoryManagerApp.Data
-
 @inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
 
 <PageTitle>Edit Item</PageTitle>
+
+<!-- This page is used to edit existing items -->
 
 <h1>Edit Item</h1>
 
@@ -23,53 +25,61 @@ else
                 <DataAnnotationsValidator />
                 <ValidationSummary role="alert"/>
                 <input type="hidden" name="Item.Id" value="@Item.Id" />
-                <div class="mb-3">
-                    <label for="sku" class="form-label">SKU:</label>
-                    <InputText id="sku" @bind-Value="Item.SKU" class="form-control" aria-required="true"/>
-                    <ValidationMessage For="() => Item.SKU" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="upc" class="form-label">UPC:</label>
-                    <InputText id="upc" @bind-Value="Item.UPC" class="form-control" />
-                    <ValidationMessage For="() => Item.UPC" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="sku" class="form-label">SKU:</label>
+                        <InputText id="sku" @bind-Value="Item.SKU" class="form-control w-75" disabled="@(!IsAdmin)" aria-required="true" />
+                        <ValidationMessage For="() => Item.SKU" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="upc" class="form-label">UPC:</label>
+                        <InputText id="upc" @bind-Value="Item.UPC" class="form-control w-75" disabled="@(!IsAdmin)" />
+                        <ValidationMessage For="() => Item.UPC" class="text-danger" />
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label">Description:</label>
-                    <InputText id="description" @bind-Value="Item.Description" class="form-control" />
+                    <InputText id="description" @bind-Value="Item.Description" class="form-control w-75" disabled="@(!IsAdmin)" />
                     <ValidationMessage For="() => Item.Description" class="text-danger" />
                 </div>
                 <div class="mb-3">
                     <label for="vendor" class="form-label">Vendor:</label>
-                    <InputText id="vendor" @bind-Value="Item.Vendor" class="form-control" />
+                    <InputText id="vendor" @bind-Value="Item.Vendor" class="form-control w-75" disabled="@(!IsAdmin)" />
                     <ValidationMessage For="() => Item.Vendor" class="text-danger" />
                 </div>
-                <div class="mb-3">
-                    <label for="cost" class="form-label">Cost:</label>
-                    <InputNumber id="cost" @bind-Value="Item.Cost" class="form-control" aria-required="true"/>
-                    <ValidationMessage For="() => Item.Cost" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="price" class="form-label">Price:</label>
-                    <InputNumber id="price" @bind-Value="Item.Price" class="form-control" aria-required="true"/>
-                    <ValidationMessage For="() => Item.Price" class="text-danger" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="cost" class="form-label">Cost:</label>
+                        <div class="input-group w-50">
+                            <span class="input-group-text">$</span>
+                            <InputNumber id="cost" @bind-Value="Item.Cost" class="form-control" disabled="@(!IsAdmin)" aria-required="true" />
+                        </div>
+                        <ValidationMessage For="() => Item.Cost" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="price" class="form-label">Price:</label>
+                        <div class="input-group w-50">
+                            <span class="input-group-text">$</span>
+                            <InputNumber id="price" @bind-Value="Item.Price" class="form-control" disabled="@(!IsAdmin)" aria-required="true" />
+                        </div>
+                        <ValidationMessage For="() => Item.Price" class="text-danger" />
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="quantity" class="form-label">Quantity:</label>
-                    <InputNumber id="quantity" @bind-Value="Item.Quantity" class="form-control" aria-required="true"/>
+                    <InputNumber id="quantity" @bind-Value="Item.Quantity" class="form-control w-25" aria-required="true" />
                     <ValidationMessage For="() => Item.Quantity" class="text-danger" />
                 </div>
-                <div class="mb-3">
-                    <label for="lastupdated" class="form-label">Last Updated:</label>
-                    <p>@Item.LastUpdated.ToString("G")</p>
-                </div>
-                <a class="btn btn-secondary" href="/Manage/Inventory/">Back</a>
-                <button type="submit" class="btn btn-success">Save</button>
+                <a class="btn btn-secondary" href="/Manage/Inventory">Back</a>
+                <button type="submit" class="btn btn-purple">Save Item</button>
             </EditForm>
         </div>
     </div>
 }
 
 @code {
+    protected bool IsAdmin { get; set; } = false;
+
     [SupplyParameterFromQuery]
     private Guid Id { get; set; }
 
@@ -78,27 +88,40 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize the context
         using var context = DbFactory.CreateDbContext();
+        // Find the item by the Id
         Item ??= await context.Item.FirstOrDefaultAsync(m => m.Id == Id);
 
+        // Catch the case where the item is not found
         if (Item is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+
+        // Check if the user is in the Admin role
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        IsAdmin = user.IsInRole("Admin");
     }
 
+    // Updates the item
     private async Task UpdateItem()
     {
+        // Initialize the context
         using var context = DbFactory.CreateDbContext();
+        // Update the LastUpdated datetime
         Item!.LastUpdated = DateTime.UtcNow;
+        // Update the entity
         context.Attach(Item!).State = EntityState.Modified;
 
         try
         {
+            // Update the database
             await context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
+            // Catch the case where item is not found
             if (!ItemExists(Item!.Id))
             {
                 NavigationManager.NavigateTo("notfound");
@@ -112,9 +135,12 @@ else
         NavigationManager.NavigateTo("/Manage/Inventory");
     }
 
+    // Checks for the item matching the id
     private bool ItemExists(Guid id)
     {
         using var context = DbFactory.CreateDbContext();
         return context.Item.Any(e => e.Id == id);
     }
+
+
 }

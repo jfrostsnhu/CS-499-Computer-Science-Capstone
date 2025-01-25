@@ -1,44 +1,68 @@
 ﻿@page "/Manage/Inventory/"
-
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using InventoryManagerApp.Data
-
 @implements IAsyncDisposable
 @inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
+@attribute [Authorize]
 
 <PageTitle>Manage Inventory</PageTitle>
 
+<!-- This page is used to view and manage the items and their inventory -->
+
 <h1>Manage Inventory</h1>
-
-<p>
-    <a class="btn btn-outline-primary" href="Manage/Inventory/create">+ Add Item</a>
-</p>
-
-<QuickGrid Class="table" Items="context.Item">
-    <PropertyColumn Property="item => item.SKU" />
-    <PropertyColumn Property="item => item.UPC" />
-    <PropertyColumn Property="item => item.Description" />
-    <PropertyColumn Property="item => item.Vendor" />
-    <PropertyColumn Property="item => item.Cost" />
-    <PropertyColumn Property="item => item.Price" />
-    <PropertyColumn Property="item => item.Quantity" />
-    <PropertyColumn Property="item => item.LastUpdated" />
-
-    <TemplateColumn Context="item">
-        <a class="btn btn-info" href="@($"Manage/Inventory/details?id={item.Id}")">Details</a> |
-        <a class="btn btn-warning" href="@($"Manage/Inventory/edit?id={item.Id}")">Edit</a> |
-        <a class="btn btn-danger" href="@($"Manage/Inventory/delete?id={item.Id}")">Delete</a>
+<br />
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <input type="search" class="form-control searchbox" placeholder="Search..." @bind="itemFilter" @bind:event="oninput" />
+    <!-- Only Admins should be able to add items -->
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <a class="btn btn-purple" href="Manage/Inventory/create"><i class="bi bi-plus-lg icon-margin-r10"></i> Add Item</a>
+        </Authorized>
+    </AuthorizeView>
+</div>
+<hr />
+<QuickGrid TGridItem="Item" Class="table" Pagination="pagination" Items="FilteredItems">
+    <PropertyColumn Title="SKU" Sortable="true" Property="item => item.SKU" />
+    <PropertyColumn Title="UPC" Sortable="true" Property="item => item.UPC" />
+    <PropertyColumn Title="Description" Sortable="true" Property="item => item.Description" />
+    <PropertyColumn Title="Vendor" Sortable="true" Property="item => item.Vendor" />
+    <PropertyColumn Title="Cost" Sortable="true" Property="item => item.Cost" />
+    <PropertyColumn Title="Price" Sortable="true" Property="item => item.Price" />
+    <PropertyColumn Title="Quantity" Sortable="true" Property="item => item.Quantity" />
+    <PropertyColumn Title="Last Updated" Sortable="true" Property="item => item.LastUpdated" />
+    <TemplateColumn Title="Actions" Context="item">
+        <a class="btn btn-purple" href="@($"Manage/Inventory/details?id={item.Id}")"><i class="bi bi-info-square icon-margin-r10"></i>Details</a> |
+        <a class="btn btn-purple" href="@($"Manage/Inventory/edit?id={item.Id}")"><i class="bi bi-pencil icon-margin-r10"></i>Edit</a> |
+        <!-- Only Admins should be able to delete items -->
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <a class="btn btn-purple" href="@($"Manage/Inventory/delete?id={item.Id}")"><i class="bi bi-trash3 icon-margin-r10"></i>Delete</a>
+            </Authorized>
+        </AuthorizeView>
     </TemplateColumn>
 </QuickGrid>
+<Paginator State="pagination" />
 
 @code {
+    private string itemFilter = string.Empty;
     private ApplicationDbContext context = default!;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 15 };
 
     protected override void OnInitialized()
     {
+        // Initialize context
         context = DbFactory.CreateDbContext();
     }
 
+    // IQueryable to handle searching through SKU, Description or Vendor fields in the table
+    private IQueryable<Item> FilteredItems =>
+        context.Item.Where(i =>
+            (i.SKU != null && i.SKU.ToLower().Contains(itemFilter.ToLower())) ||
+            (i.Description != null && i.Description.ToLower().Contains(itemFilter.ToLower())) ||
+            (i.Vendor != null && i.Vendor.ToLower().Contains(itemFilter.ToLower())));
+
+    // Dispose context resource
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }

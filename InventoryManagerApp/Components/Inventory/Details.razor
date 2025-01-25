@@ -1,15 +1,15 @@
 ﻿@page "/Manage/Inventory/details"
-
 @using Microsoft.EntityFrameworkCore
 @using InventoryManagerApp.Data
-
 @inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@attribute [Authorize]
 
 <PageTitle>Item Details</PageTitle>
 
-<h1>View Item Details</h1>
+<!-- This page is used to view item details -->
 
+<h1>View Item Details</h1>
 <div>
     <hr />
     @if (item is null)
@@ -49,9 +49,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize context
         using var context = DbFactory.CreateDbContext();
+        // Get item by Id
         item = await context.Item.FirstOrDefaultAsync(m => m.Id == Id);
-
+        // Catch case if item is not found
         if (item is null)
         {
             NavigationManager.NavigateTo("notfound");

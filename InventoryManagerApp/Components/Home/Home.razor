@@ -1,11 +1,10 @@
 ﻿@using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Services
 @using Microsoft.EntityFrameworkCore
-
 @inject LowStockMonitorService MonitorService
 @inject ILogger<Home> logger
 @inject IDbContextFactory<InventoryManagerApp.Data.ApplicationDbContext> DbFactory
-
+@attribute [Authorize]
 @page "/"
 
 <PageTitle>Home</PageTitle>
@@ -44,8 +43,8 @@ else
                         <strong>Last Updated:</strong> @item.LastUpdated
                     </p>
                     <div class="d-flex justify-content-center">
-                        <a href="@($"Manage/Inventory/details?id={item.Id}")" class="btn btn-purple w-50"
-                        aria-label="View details for @item.Description">View Item Details</a>
+                        <a href="@($"Manage/Inventory/edit?id={item.Id}")" class="btn btn-purple w-50"
+                        aria-label="Edit Item for @item.Description">Edit Item</a>
                     </div>
                 </div>
             </div>
