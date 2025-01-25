@@ -43,7 +43,7 @@
         </AuthorizeView>
     </TemplateColumn>
 </QuickGrid>
-<Paginator State="pagination" />
+<Paginator State="pagination"/>
 
 @code {
     private string itemFilter = string.Empty;
@@ -56,7 +56,7 @@
         context = DbFactory.CreateDbContext();
     }
 
-    // IQueryable to handle searching through SKU, Description or Vendor fields in the table
+    // IQueryable to handle filtered items by their SKU, Description or Vendor
     private IQueryable<Item> FilteredItems =>
         context.Item.Where(i =>
             (i.SKU != null && i.SKU.ToLower().Contains(itemFilter.ToLower())) ||

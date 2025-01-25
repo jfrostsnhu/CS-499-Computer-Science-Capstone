@@ -1,35 +1,42 @@
 ﻿@page "/Manage/Roles"
-
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter
 @using InventoryManagerApp.Data
 @using Microsoft.AspNetCore.Identity
-
 @inject RoleManager<IdentityRole> RoleManager
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Manage Roles</PageTitle>
 
+<!-- This page is used to view and manage the roles -->
+
 <h1>Manage Roles</h1>
-
-<p>
-    <a class="btn btn-outline-primary" href="Manage/Roles/create">+ Add Role</a>
-</p>
-
-<QuickGrid Class="table" Items="RoleList" TGridItem="IdentityRole">
-    <PropertyColumn Title="Role Name" Property="role => role.Name" />
-
-    <TemplateColumn Context="role">
-        <a class="btn btn-info" href="@($"Manage/Roles/details?id={role.Id}")">Details</a> |
-        <a class="btn btn-danger" href="@($"Manage/Roles/delete?id={role.Id}")">Delete</a>
+<br />
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <input type="search" class="form-control searchbox" placeholder="Search..." @bind="roleFilter" @bind:event="oninput" />
+    <a class="btn btn-purple" href="Manage/Roles/create"><i class="bi bi-plus-lg icon-margin-r10"></i> Add Role</a>
+</div>
+<hr />
+<QuickGrid Class="table" Pagination="pagination" Items="FilteredRoles" TGridItem="IdentityRole">
+    <PropertyColumn Title="Role Name" Sortable="true" Property="role => role.Name" />
+    <TemplateColumn Sortable="true" Context="role">
+        <a class="btn btn-purple" href="@($"Manage/Roles/details?id={role.Id}")"><i class="bi bi-info-square icon-margin-r10"></i>Details</a> |
+        <a class="btn btn-purple" href="@($"Manage/Roles/delete?id={role.Id}")"><i class="bi bi-trash3 icon-margin-r10"></i>Delete</a>
     </TemplateColumn>
 </QuickGrid>
+<Paginator State="pagination"/>
 
 @code {
-    private IQueryable<IdentityRole> RoleList { get; set; } = Enumerable.Empty<IdentityRole>().AsQueryable();
+    private string roleFilter = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 15 };
 
-    protected override void OnInitialized()
-    {
-        RoleList = RoleManager.Roles;
-    }
+    // IQueryable to handle filtering roles by their Name
+    private IQueryable<IdentityRole> FilteredRoles =>
+        string.IsNullOrWhiteSpace(roleFilter)
+            ? RoleManager.Roles
+            : RoleManager.Roles.Where(role =>
+                (role.Name != null && role.Name.ToLower().Contains(roleFilter.ToLower())) ||
+                (role.NormalizedName != null && role.NormalizedName.ToLower().Contains(roleFilter.ToLower())));
 }

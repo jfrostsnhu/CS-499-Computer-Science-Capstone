@@ -1,20 +1,18 @@
 ﻿@page "/Manage/Roles/delete"
-
 @using Microsoft.EntityFrameworkCore
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
-
 @inject RoleManager<IdentityRole> RoleManager
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Delete Role</PageTitle>
 
-<h1>Delete Role</h1>
+<!-- This page is used to delete items -->
 
+<h1>Delete Role</h1>
+<br />
 <p>Are you sure you want to delete this role?</p>
 <div>
     <hr />
@@ -29,7 +27,7 @@
         </dl>
         <EditForm method="post" Model="Role" OnValidSubmit="DeleteRole" FormName="deleteRole" Enhance>
             <a class="btn btn-secondary" href="/Manage/Roles/">Back</a>
-            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="submit" class="btn btn-purple">Delete</button>
         </EditForm>
     }
 </div>
@@ -41,6 +39,7 @@
     private IdentityRole? Role { get; set; }
     private string? ErrorMessage { get; set; }
 
+    // Gets the role by Id on render
     protected override async Task OnInitializedAsync()
     {
         if (string.IsNullOrEmpty(Id))
@@ -58,8 +57,10 @@
         }
     }
 
+    // Deletes the role
     private async Task DeleteRole()
     {
+        // Ensure not null
         if (Role == null)
         {
             ErrorMessage = "Role not found";
@@ -67,14 +68,16 @@
             return;
         }
 
+        // Delete the role from the database
         var result = await RoleManager.DeleteAsync(Role);
-
         if (result.Succeeded)
         {
+            // If successful return to Manage Roles screen
             NavigationManager.NavigateTo("/Manage/Roles/");
         }
         else
         {
+            // Otherwise throw an error message
             ErrorMessage = string.Join(",", result.Errors.Select(e => e.Description));
             StateHasChanged();
         }

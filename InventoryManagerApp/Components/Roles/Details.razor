@@ -1,20 +1,18 @@
 ﻿@page "/Manage/Roles/details"
-
 @using Microsoft.EntityFrameworkCore
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
-
 @inject RoleManager<IdentityRole> RoleManager
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Role Details</PageTitle>
 
-<h1>View Role Details</h1>
+<!-- This page is used to view role details -->
 
+<h1>View Role Details</h1>
+<br />
 <div>
     <hr />
     @if (Role is null)
@@ -39,6 +37,7 @@
     private IdentityRole? Role { get; set; }
     private string? ErrorMessage { get; set; }
 
+    // Gets the role by Id
     protected override async Task OnInitializedAsync()
     {
         if (string.IsNullOrEmpty(Id))

@@ -1,26 +1,24 @@
 ﻿@page "/Manage/Roles/create"
-
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.EntityFrameworkCore
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using InventoryManagerApp.Data
 @using InventoryManagerApp.Components.Account
 @using InventoryManagerApp.Components.Account.Shared
-
 @inject NavigationManager NavigationManager
 @inject RoleManager<IdentityRole> RoleManager
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<Create> Logger
+@attribute [Authorize(Roles="Admin")]
 
 <PageTitle>Add Role</PageTitle>
 
-<h1>Add Role</h1>
+<!-- This page is used to add a new role -->
 
+<h1>Add Role</h1>
+<br />
 <h3>Enter role details below.</h3>
 <hr />
 <div class="row">
@@ -30,12 +28,12 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
-                <InputText @bind-Value="Input.RoleName" class="form-control" autocomplete="rolename" aria-required="true" placeholder="Role Name"/>
-                <label for="rolename">Role Name</label> 
+                <label for="rolename">Role Name:</label>
+                <InputText @bind-Value="Input.RoleName" class="form-control w-50" autocomplete="rolename" aria-required="true" placeholder="Role Name"/>
                 <ValidationMessage For="() => Input.RoleName" class="text-danger"/>
             </div>        
             <a class="btn btn-secondary" href="/Manage/Roles">Back</a>
-            <button type="submit" class="btn btn-success">Save</button>
+            <button type="submit" class="btn btn-purple">Save</button>
         </EditForm>
     </div>
 </div>
@@ -48,8 +46,10 @@
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
+    // Method to check if the role already exists
     private async Task AddRole(EditContext editContext)
     {
+        // Do not duplicate roles
         var exists = await RoleManager.RoleExistsAsync(Input.RoleName);
         if (exists)
         {
@@ -57,15 +57,17 @@
             return;
         }
 
+        // Create the new role
         var result = await RoleManager.CreateAsync(new IdentityRole(Input.RoleName));
-
         if (result.Succeeded)
         {
+            // If successful log message and return user to Manage Roles screen
             Logger.LogInformation("Role successfully created");
             NavigationManager.NavigateTo("/Manage/Roles/");
         }
         else
         {
+            // If error return errors
             identityErrors = result.Errors;
             return;
         }
