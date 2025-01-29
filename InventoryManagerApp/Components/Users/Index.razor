@@ -31,9 +31,9 @@ else
 {
     <QuickGrid Class="table" Pagination="pagination" Items="FilteredUsers" TGridItem="UserWithRole">
         <PropertyColumn Sortable="true" Property="user => user.Email" />
-        <PropertyColumn Sortable="true" Property="user => user.FirstName" />
-        <PropertyColumn Sortable="true" Property="user => user.LastName" />
-        <PropertyColumn Sortable="true" Property="user => user.PhoneNumber" />
+        <PropertyColumn Title="First Name" Sortable="true" Property="user => user.FirstName" />
+        <PropertyColumn Title="Last Name" Sortable="true" Property="user => user.LastName" />
+        <PropertyColumn Title="Phone Number" Sortable="true" Property="user => user.PhoneNumber" />
         <PropertyColumn Sortable="true" Property="user => user.Role" />
         <TemplateColumn Context="user">
             <a class="btn btn-purple" href="@($"Manage/Users/details?id={user.Id}")">Details</a> |
